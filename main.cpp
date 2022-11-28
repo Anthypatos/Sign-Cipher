@@ -2,42 +2,41 @@
 #include <iostream>
 #include <cstdlib>
 #include <filesystem>
-#include <map>
+#include <unordered_map>
 #include <utility>
 #include <fstream>
 #include <ios>
-#include <cctype>
 #include <cstddef>
 #include <cstdio>
 #include <stdexcept>
 
 
 std::string Encrypt(const std::string& CsMessage, int iKey,
-    const std::map<char, int>& ChtAlphaToIndex, const std::map<int, char>& ChtIndexToAlpha);
+    const std::unordered_map<char, int>& ChtAlphaToIndex, const std::unordered_map<int, char>& ChtIndexToAlpha);
 std::string Decrypt(const std::string& CsMessage, int iKey,
-    const std::map<char, int>& ChtAlphaToIndex, const std::map<int, char>& ChtIndexToAlpha);
+    const std::unordered_map<char, int>& ChtAlphaToIndex, const std::unordered_map<int, char>& ChtIndexToAlpha);
 std::string Sign(const std::string& CsMessage);
 
 
 int main(int iArgNumber, char** asArgs)
 {
-    if (iArgNumber != 2)
+    if (iArgNumber != 3)
     {
         std::cout << "Unrecognized command." << std::endl <<
-            "Usage: signcipher [FILE]";
+            "Usage: signcipher [FILE] [HASH]";
         return EXIT_FAILURE;
     }
 
     std::filesystem::path pathFile(asArgs[1]);
     if (!std::filesystem::exists(pathFile) || !std::filesystem::is_regular_file(pathFile))
     {
-        std::cout << "File does not exist." << std::endl;
+        std::cout << "Error opening file." << std::endl;
         return EXIT_FAILURE;
     }
 
     const std::string CsAlphabet{"abcdefghijklmnopqrstuvwxyz"};
-    std::map<char, int> htAlphaToIndex{};
-    std::map<int, char> htIndexToAlpha{};
+    std::unordered_map<char, int> htAlphaToIndex{};
+    std::unordered_map<int, char> htIndexToAlpha{};
 
     for (int i = 0; CsAlphabet[i]; i++)
     {
@@ -51,26 +50,20 @@ int main(int iArgNumber, char** asArgs)
     bool bIsFound = false;
     while (ifstreamFile >> sPassword && !bIsFound)
     {
-        std::string sTemp = Sign(Encrypt(sPassword, sPassword.length(), htAlphaToIndex, htIndexToAlpha));
-        std::cout << sPassword << " " << sTemp;
-        if (sTemp == "cc7d9b70e41784614a6bfac7c047262c")
+        std::string sHash = Sign(Encrypt(sPassword, sPassword.length(), htAlphaToIndex, htIndexToAlpha));
+        std::cout << sPassword << " " << sHash;
+        if (sHash == asArgs[2])
         {
-            std::cout << " OK " << sPassword;
+            std::cout << " OK ";
             bIsFound = true;
         }
         std::cout << std::endl;
     }
-
-    //for (int i = 0; asArgs[1][i]; i++) asArgs[1][i] = std::tolower(asArgs[1][i]);
-
-    //std::cout << Encrypt(asArgs[1], 4, htAlphaToIndex, htIndexToAlpha) << std::endl;
-    //std::cout << Decrypt(asArgs[1], 4, htAlphaToIndex, htIndexToAlpha) << std::endl;
-    //std::cout << Sign(asArgs[1]) << std::endl;
 }
 
 
 std::string Encrypt(const std::string& CsMessage, int iKey,
-    const std::map<char, int>& ChtAlphaToIndex, const std::map<int, char>& ChtIndexToAlpha)
+    const std::unordered_map<char, int>& ChtAlphaToIndex, const std::unordered_map<int, char>& ChtIndexToAlpha)
 {
     std::string sCipherText{};
 
@@ -86,7 +79,7 @@ std::string Encrypt(const std::string& CsMessage, int iKey,
 
 
 std::string Decrypt(const std::string& CsMessage, int iKey,
-    const std::map<char, int>& ChtAlphaToIndex, const std::map<int, char>& ChtIndexToAlpha)
+    const std::unordered_map<char, int>& ChtAlphaToIndex, const std::unordered_map<int, char>& ChtIndexToAlpha)
 {
     std::string sPlainText{};
     int iCurrentPos = ChtAlphaToIndex.at(CsMessage.back());
