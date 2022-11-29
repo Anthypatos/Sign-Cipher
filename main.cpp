@@ -1,6 +1,7 @@
 #include <string>
 #include <iostream>
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
 #include <unordered_map>
 #include <utility>
@@ -20,17 +21,10 @@ std::string Sign(const std::string& CsMessage);
 
 int main(int iArgNumber, char** asArgs)
 {
-    if (iArgNumber != 3)
+    if (iArgNumber < 2)
     {
         std::cout << "Unrecognized command." << std::endl <<
-            "Usage: signcipher [FILE] [HASH]";
-        return EXIT_FAILURE;
-    }
-
-    std::filesystem::path pathFile(asArgs[1]);
-    if (!std::filesystem::exists(pathFile) || !std::filesystem::is_regular_file(pathFile))
-    {
-        std::cout << "Error opening file." << std::endl;
+            "Type 'signcipher -h' for help" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -44,20 +38,66 @@ int main(int iArgNumber, char** asArgs)
         htIndexToAlpha.insert(std::make_pair(i, CsAlphabet[i]));
     }
 
-    std::ifstream ifstreamFile(asArgs[1], std::ios_base::in);
-    std::string sPassword{};
-
-    bool bIsFound = false;
-    while (ifstreamFile >> sPassword && !bIsFound)
+    if (iArgNumber == 2)
     {
-        std::string sHash = Sign(Encrypt(sPassword, sPassword.length(), htAlphaToIndex, htIndexToAlpha));
-        std::cout << sPassword << " " << sHash;
-        if (sHash == asArgs[2])
+        if (!(std::strcmp(asArgs[1], "-h")))
         {
-            std::cout << " OK ";
-            bIsFound = true;
+            std::cout << "Usage: signcipher [OPTION] {FILE | HASH}" << std::endl <<
+                "-e string\tEncrypt string" << std::endl <<
+                "-d string\tDecrypt string" << std::endl <<
+                "-s string\tSign string" << std::endl <<
+                "-f file hash\tCompares a hash against the passwords in file" << std::endl <<
+                "-h\tShow this help" << std::endl;
         }
-        std::cout << std::endl;
+    }
+    else if (iArgNumber == 3)
+    {
+        if (!(std::strcmp(asArgs[1], "-e")))
+        {
+            std::cout << Encrypt(asArgs[2], std::strlen(asArgs[2]), htAlphaToIndex, htIndexToAlpha) << std::endl;
+        }
+        else if (!(std::strcmp(asArgs[1], "-d")))
+        {
+            std::cout << Encrypt(asArgs[2], std::strlen(asArgs[2]), htAlphaToIndex, htIndexToAlpha) << std::endl;
+        }
+        else if (!(std::strcmp(asArgs[1], "-s")))
+        {
+            std::cout << Sign(asArgs[2]) << std::endl;
+        }
+    }
+    else if (iArgNumber == 4)
+    {
+        if (!(std::strcmp(asArgs[1], "-f")))
+        {
+            std::filesystem::path pathFile(asArgs[2]);
+            if (!std::filesystem::exists(pathFile) || !std::filesystem::is_regular_file(pathFile))
+            {
+                std::cout << "Error opening file." << std::endl;
+                return EXIT_FAILURE;
+            }
+
+            std::ifstream ifstreamFile(asArgs[2], std::ios_base::in);
+            std::string sPassword{};
+
+            bool bIsFound = false;
+            while (ifstreamFile >> sPassword && !bIsFound)
+            {
+                std::string sHash = Sign(Encrypt(sPassword, sPassword.length(), htAlphaToIndex, htIndexToAlpha));
+                std::cout << sPassword << " " << sHash;
+                if (sHash == asArgs[3])
+                {
+                    std::cout << " OK ";
+                    bIsFound = true;
+                }
+                std::cout << std::endl;
+            }
+        }
+    }
+    else
+    {
+        std::cout << "Unrecognized command." << std::endl <<
+            "Type 'signcipher -h' for help" << std::endl;
+        return EXIT_FAILURE;
     }
 }
 
