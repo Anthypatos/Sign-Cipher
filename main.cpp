@@ -58,7 +58,7 @@ int main(int iArgNumber, char** asArgs)
         }
         else if (!(std::strcmp(asArgs[1], "-d")))
         {
-            std::cout << Encrypt(asArgs[2], std::strlen(asArgs[2]), htAlphaToIndex, htIndexToAlpha) << std::endl;
+            std::cout << Decrypt(asArgs[2], std::strlen(asArgs[2]), htAlphaToIndex, htIndexToAlpha) << std::endl;
         }
         else if (!(std::strcmp(asArgs[1], "-s")))
         {
